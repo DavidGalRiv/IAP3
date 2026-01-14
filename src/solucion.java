@@ -1,4 +1,15 @@
-import com.rabbitmq.client.*;
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.rabbitmq.client.BuiltinExchangeType;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+
+import es.upv.iap.pvalderas.http.HTTPClient;
 
 // Importaciones de los JARs proporcionados por los profesores
 import es.upv.iap.pvalderas.http.HTTPClient;
