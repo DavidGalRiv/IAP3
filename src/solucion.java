@@ -18,14 +18,12 @@ import java.nio.charset.StandardCharsets;
 
 public class solucion {
 
-    // --- CONFIGURACIÓN DE ARQUITECTURA ---
     private static final String EXCHANGE_ENTRADA = "exchange.recepcion";
     private static final String COLA_PROCESAMIENTO = "cola.procesamiento";
     private static final String EXCHANGE_SALIDA = "traslados.localizaciones";
     private static final String COLA_BD = "cola.registro.bd";
     private static final String COLA_VISUALIZADOR = "cola.visualizador";
 
-    // --- CONFIGURACIÓN BD ---
     private static final String DB_HOST = "localhost";
     private static final String DB_PORT = "3306";
     private static final String DB_USER = "root";
@@ -35,18 +33,17 @@ public class solucion {
     public static void main(String[] args) throws InterruptedException {
         System.out.println("=== SISTEMA TRANSIAP - INICIANDO ===");
 
-        // Lanzamos los componentes en hilos paralelos
         new Thread(new Runnable() { public void run() { ejecutarMiddleware(); }}).start();
         new Thread(new Runnable() { public void run() { ejecutarVisualizador(); }}).start();
         new Thread(new Runnable() { public void run() { ejecutarRegistroBD(); }}).start();
 
-        Thread.sleep(3000); // Esperamos a que RabbitMQ configure colas
+        Thread.sleep(3000);
 
         System.out.println("\n--- LANZANDO GENERADORES DE PRUEBA ---\n");
         enviarMensajesPrueba();
     }
 
-    // 1. MIDDLEWARE (Generadores -> API -> Exchange Final)
+    
     private static void ejecutarMiddleware() {
         try {
             ConnectionFactory factory = new ConnectionFactory();
@@ -69,7 +66,6 @@ public class solucion {
                     try {
                         DatosNormalizados datos = parsearMensajeManual(mensaje);
 
-                        // Enriquecimiento con API REST
                         String urlTime = "https://pedvalar.webs.upv.es/iap/rest/sntn/timestamp";
                         String urlKey = "https://pedvalar.webs.upv.es/iap/rest/sntn/key/" + datos.matricula;
                         
@@ -80,7 +76,6 @@ public class solucion {
                         String key = extraerValorJson(jsonKey, "appKey");
                         if (key == null) key = "NO-AUTH";
 
-                        // Construcción JSON Final
                         String mensajeFinal = String.format(
                             "{\"coordenadas\": {\"latitud\": %s, \"longitud\": %s}, \"vehiculo\": \"%s\", \"auth\": \"%s\", \"timestamp\": \"%s\"}", 
                             String.valueOf(datos.latitud).replace(",", "."), 
@@ -98,7 +93,6 @@ public class solucion {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    // 2. VISUALIZADOR
     private static void ejecutarVisualizador() {
         try {
             ConnectionFactory factory = new ConnectionFactory();
@@ -121,7 +115,6 @@ public class solucion {
         } catch (Exception e) {}
     }
 
-    // 3. REGISTRO BD
     private static void ejecutarRegistroBD() {
         try {
             ConnectionFactory factory = new ConnectionFactory();
@@ -167,7 +160,6 @@ public class solucion {
         } catch (Exception e) {}
     }
 
-    // 4. GENERADORES
     private static void enviarMensajesPrueba() {
         try {
             ConnectionFactory factory = new ConnectionFactory();
@@ -191,7 +183,6 @@ public class solucion {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    // UTILIDADES MANUALES
     private static class DatosNormalizados { String matricula; double latitud; double longitud; }
 
     private static DatosNormalizados parsearMensajeManual(String msg) {
